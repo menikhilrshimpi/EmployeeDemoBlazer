@@ -1,0 +1,5 @@
+dotnet new blazorserver -n EmployeeManagementSystem
+cd EmployeeManagementSystem
+dotnet add package Microsoft.AspNetCore.Authentication.Cookies
+dptnet add Microsoft.AspNetCore.Components.Authorization;
+dotnet add package Newtonsoft.Json
