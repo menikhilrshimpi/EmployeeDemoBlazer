@@ -1,0 +1,39 @@
+﻿@inherits LayoutComponentBase
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+
+<div class="page">
+    <div class="sidebar">
+        <NavMenu />
+    </div>
+    <div class="container">
+        <div class="main">
+            <div class="top-row px-4">
+                <AuthorizeView>
+                    <Authorized>
+                        <span class="mr-2" style="padding-right: 10px;">Hello, @context.User.Identity.Name!</span>
+                        <button class="btn btn-sm btn-outline-primary" @onclick="Logout">Logout</button>
+                    </Authorized>
+                    <NotAuthorized>
+                        <a href="/login" class="btn btn-sm btn-primary">Login</a>
+                    </NotAuthorized>
+                </AuthorizeView>
+            </div>
+
+            <div class="content px-4">
+                @Body
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private async Task Logout()
+    {
+        if (AuthenticationStateProvider is CustomAuthStateProvider customAuthStateProvider)
+        {
+            await customAuthStateProvider.MarkUserAsLoggedOut();
+        }
+        NavigationManager.NavigateTo("/login");
+    }
+}

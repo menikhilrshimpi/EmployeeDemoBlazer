@@ -1,0 +1,120 @@
+﻿@page "/employees/add"
+@page "/employees/edit/{Id:int}"
+@attribute [Authorize(Roles = "Admin")]
+@inject IEmployeeService EmployeeService
+@inject NavigationManager NavigationManager
+
+<div class="employee-form-container">
+    <div class="employee-form-card">
+        <h3 class="form-title">@(Employee.Id == 0 ? "New Employee" : "Edit Employee")</h3>
+
+        <EditForm Model="@Employee" OnValidSubmit="@HandleValidSubmit">
+            <DataAnnotationsValidator />
+            @* <ValidationSummary /> *@
+
+            <div class="form-grid">
+                <!-- Row 1 -->
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <InputText @bind-Value="Employee.Name" class="form-control" />
+                    <ValidationMessage For="@(() => Employee.Name)" />
+                </div>
+
+                <div class="form-group">
+                    <label>Address</label>
+                    <InputText @bind-Value="Employee.Address" class="form-control" />
+                    <ValidationMessage For="@(() => Employee.Address)" />
+                </div>
+
+                <!-- Row 2 -->
+                <div class="form-group">
+                    <label>Employee Email</label>
+                    <InputText @bind-Value="Employee.Email" class="form-control" />
+                    <ValidationMessage For="@(() => Employee.Email)" />
+                </div>
+
+                <div class="form-group">
+                    <label>State</label>
+                    <InputText @bind-Value="Employee.State" class="form-control" />
+                    <ValidationMessage For="@(() => Employee.State)" />
+                </div>
+
+                <!-- Row 3 -->
+                <div class="form-group">
+                    <label>City</label>
+                    <InputText @bind-Value="Employee.City" class="form-control" />
+                    <ValidationMessage For="@(() => Employee.City)" />
+                </div>
+
+                <div class="form-group">
+                    <label>Phone</label>
+                    <InputText @bind-Value="Employee.Phone" class="form-control" />
+                    <ValidationMessage For="@(() => Employee.Phone)" />
+                </div>
+
+                <!-- Row 4 -->
+                <div class="form-group">
+                    <label>Project Account Name</label>
+                    <InputText @bind-Value="Employee.ProjectAccountName" class="form-control" />
+                    <ValidationMessage For="@(() => Employee.ProjectAccountName)" />
+                </div>
+
+                <div class="form-group">
+                    <label>Designation</label>
+                    <InputText @bind-Value="Employee.Designation" class="form-control" />
+                    <ValidationMessage For="@(() => Employee.Designation)" />
+                </div>
+
+                <!-- Row 5 -->
+                <div class="form-group">
+                    <label>CTC</label>
+                    <InputNumber @bind-Value="Employee.CTC" class="form-control" />
+                    <ValidationMessage For="@(() => Employee.CTC)" />
+                </div>
+            </div>
+
+            <div class="form-note">
+                An invitation message will be sent to your employee to complete their own details online.
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+                <button type="submit" class="btn btn-primary">@(Employee.Id == 0 ? "Next" : "Save")</button>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Employee Employee { get; set; } = new Employee();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Id != 0)
+        {
+            Employee = await EmployeeService.GetEmployeeByIdAsync(Id) ?? new Employee();
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        if (Employee.Id == 0)
+        {
+            await EmployeeService.AddEmployeeAsync(Employee);
+        }
+        else
+        {
+            await EmployeeService.UpdateEmployeeAsync(Employee);
+        }
+
+        NavigationManager.NavigateTo("/employees");
+    }
+
+    private void Cancel()
+    {
+        NavigationManager.NavigateTo("/employees");
+    }
+}
