@@ -3,3 +3,53 @@ cd EmployeeManagementSystem
 dotnet add package Microsoft.AspNetCore.Authentication.Cookies
 dptnet add Microsoft.AspNetCore.Components.Authorization;
 dotnet add package Newtonsoft.Json
+
+
+
+
+employee management system edit/delete with Blazor
+Give provision to edit the existing user. Not all users should be editable, only the users that are created
+by the logged in users should be editable other records should be only read only. On delete should
+Give provision to edit the existing user. Not all users should be editable, only the users that are created by the logged in users should be editable other records should be only read only
+On
+
+
+
+Write .Net core blazor application for employee management system
+
+1. There are two type of user. Admin user and Employee User
+2. Admin User can able to Add, Update, Delete, GetListOfAll, Search, GetEmployeeById from json file
+2. Employee form contain fields like ID,Name Email, Phone, Addreess, state and city,
+   Project Account Name, Designation and CTC,
+3. Implement login & registration functionality with authentication and authorization 
+5. Both Admin and Employee user can able to login to application
+6. Employee User should not able to Add/Delete another employee data, they can just view and search list of employee.
+7. all records will save and fetch from Json File
+
+
+
+
+
+
+4. There should be one Super Admin who can able to add,Update,Delete and See List of Employee.
+5. Except Super Admin other user can see their own profile but not others.
+6  Employee are not able to delete profile
+
+
+Create .Net core api service for 
+i want add employee page design should as uploaded image. but form fields should be replace with our Employee.cs
+
+
+Name, Gender, Email, Phone number , Address, State , City, zipcode, ProjectName, designation & ctc
+profilephoto to upload profile picture
+
+Design should be same uploaded one
+
+create registration form image for employee directive service with attractive design  & it contains below fields
+Name, Gender, Email, Phone number , Address, State , City, zipcode, ProjectAccountName, designation & ctc
+Design should be same uploaded one
+
+
+I want EmployeeList.Razor page design should be same uploaded image & NavMenu.Razor should also be same as shown in uploaded image. But Fields Of should be replace with Employee.cs.
+Pagination Should be enable on EmployeeList.Razor and default it should load 10 records
+NavManu Should Display Current User Name, Email, And Designation.
