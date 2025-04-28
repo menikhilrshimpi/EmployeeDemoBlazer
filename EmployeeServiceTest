@@ -1,0 +1,207 @@
+//dotnet add package Moq
+//dotnet add package xunit
+
+using EmployeeManagementSystem.Services;
+using Moq;
+using Newtonsoft.Json;
+using System.IO;
+using System.Text;
+using Xunit;
+
+namespace EmployeeManagementSystem.Tests.Services
+{
+    public class EmployeeServiceTests
+    {
+        private readonly Mock<IFileWrapper> _fileWrapperMock;
+        private readonly EmployeeService _employeeService;
+
+        public EmployeeServiceTests()
+        {
+            _fileWrapperMock = new Mock<IFileWrapper>();
+            _employeeService = new EmployeeService(_fileWrapperMock.Object);
+        }
+
+        [Fact]
+        public async Task GetEmployeesAsync_WhenFileDoesNotExist_ReturnsEmptyList()
+        {
+            // Arrange
+            _fileWrapperMock.Setup(f => f.Exists(It.IsAny<string>())).Returns(false);
+
+            // Act
+            var result = await _employeeService.GetEmployeesAsync();
+
+            // Assert
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task GetEmployeesAsync_WhenFileExists_ReturnsEmployees()
+        {
+            // Arrange
+            var employees = new List<Employee>
+            {
+                new Employee { Id = 1, Name = "John Doe", Email = "john@example.com" },
+                new Employee { Id = 2, Name = "Jane Smith", Email = "jane@example.com" }
+            };
+
+            var json = JsonConvert.SerializeObject(employees);
+            _fileWrapperMock.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
+            _fileWrapperMock.Setup(f => f.ReadAllTextAsync(It.IsAny<string>())).ReturnsAsync(json);
+
+            // Act
+            var result = await _employeeService.GetEmployeesAsync();
+
+            // Assert
+            Assert.Equal(2, result.Count);
+            Assert.Equal("John Doe", result[0].Name);
+        }
+
+        [Fact]
+        public async Task GetEmployeeByIdAsync_WhenEmployeeExists_ReturnsEmployee()
+        {
+            // Arrange
+            var employees = new List<Employee>
+            {
+                new Employee { Id = 1, Name = "John Doe" },
+                new Employee { Id = 2, Name = "Jane Smith" }
+            };
+
+            var json = JsonConvert.SerializeObject(employees);
+            _fileWrapperMock.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
+            _fileWrapperMock.Setup(f => f.ReadAllTextAsync(It.IsAny<string>())).ReturnsAsync(json);
+
+            // Act
+            var result = await _employeeService.GetEmployeeByIdAsync(1);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("John Doe", result.Name);
+        }
+
+        [Fact]
+        public async Task GetEmployeeByIdAsync_WhenEmployeeDoesNotExist_ReturnsNull()
+        {
+            // Arrange
+            _fileWrapperMock.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
+            _fileWrapperMock.Setup(f => f.ReadAllTextAsync(It.IsAny<string>())).ReturnsAsync("[]");
+
+            // Act
+            var result = await _employeeService.GetEmployeeByIdAsync(99);
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        [Fact]
+        public async Task AddEmployeeAsync_AssignsNewIdAndSavesToFile()
+        {
+            // Arrange
+            var employees = new List<Employee>();
+            var newEmployee = new Employee { Name = "New Employee" };
+
+            _fileWrapperMock.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
+            _fileWrapperMock.Setup(f => f.ReadAllTextAsync(It.IsAny<string>())).ReturnsAsync("[]");
+            _fileWrapperMock.Setup(f => f.WriteAllTextAsync(It.IsAny<string>(), It.IsAny<string>()))
+                .Callback<string, string>((_, json) =>
+                {
+                    employees = JsonConvert.DeserializeObject<List<Employee>>(json);
+                });
+
+            // Act
+            await _employeeService.AddEmployeeAsync(newEmployee);
+
+            // Assert
+            Assert.Single(employees);
+            Assert.Equal(1, employees[0].Id);
+            Assert.Equal("New Employee", employees[0].Name);
+        }
+
+        [Fact]
+        public async Task UpdateEmployeeAsync_WhenEmployeeExists_UpdatesAndSaves()
+        {
+            // Arrange
+            var employees = new List<Employee>
+            {
+                new Employee { Id = 1, Name = "Old Name" }
+            };
+
+            var updatedEmployee = new Employee { Id = 1, Name = "Updated Name" };
+
+            _fileWrapperMock.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
+            _fileWrapperMock.Setup(f => f.ReadAllTextAsync(It.IsAny<string>())).ReturnsAsync(JsonConvert.SerializeObject(employees));
+            _fileWrapperMock.Setup(f => f.WriteAllTextAsync(It.IsAny<string>(), It.IsAny<string>()))
+                .Callback<string, string>((_, json) =>
+                {
+                    employees = JsonConvert.DeserializeObject<List<Employee>>(json);
+                });
+
+            // Act
+            await _employeeService.UpdateEmployeeAsync(updatedEmployee);
+
+            // Assert
+            Assert.Equal("Updated Name", employees[0].Name);
+        }
+
+        [Fact]
+        public async Task DeleteEmployeeAsync_RemovesEmployeeAndSaves()
+        {
+            // Arrange
+            var employees = new List<Employee>
+            {
+                new Employee { Id = 1, Name = "John Doe" },
+                new Employee { Id = 2, Name = "Jane Smith" }
+            };
+
+            _fileWrapperMock.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
+            _fileWrapperMock.Setup(f => f.ReadAllTextAsync(It.IsAny<string>())).ReturnsAsync(JsonConvert.SerializeObject(employees));
+            _fileWrapperMock.Setup(f => f.WriteAllTextAsync(It.IsAny<string>(), It.IsAny<string>()))
+                .Callback<string, string>((_, json) =>
+                {
+                    employees = JsonConvert.DeserializeObject<List<Employee>>(json);
+                });
+
+            // Act
+            await _employeeService.DeleteEmployeeAsync(1);
+
+            // Assert
+            Assert.Single(employees);
+            Assert.Equal(2, employees[0].Id);
+        }
+
+        [Fact]
+        public async Task SearchEmployeesAsync_ReturnsMatchingEmployees()
+        {
+            // Arrange
+            var employees = new List<Employee>
+            {
+                new Employee { Id = 1, Name = "John Doe", Email = "john@example.com", ProjectAccountName = "Project A", Designation = "Developer" },
+                new Employee { Id = 2, Name = "Jane Smith", Email = "jane@example.com", ProjectAccountName = "Project B", Designation = "Manager" }
+            };
+
+            _fileWrapperMock.Setup(f => f.Exists(It.IsAny<string>())).Returns(true);
+            _fileWrapperMock.Setup(f => f.ReadAllTextAsync(It.IsAny<string>())).ReturnsAsync(JsonConvert.SerializeObject(employees));
+
+            // Act
+            var result = await _employeeService.SearchEmployeesAsync("Project A");
+
+            // Assert
+            Assert.Single(result);
+            Assert.Equal("John Doe", result[0].Name);
+        }
+    }
+
+    // Mock File Operations (since System.IO.File is static)
+    public interface IFileWrapper
+    {
+        bool Exists(string path);
+        Task<string> ReadAllTextAsync(string path);
+        Task WriteAllTextAsync(string path, string contents);
+    }
+
+    public class FileWrapper : IFileWrapper
+    {
+        public bool Exists(string path) => File.Exists(path);
+        public Task<string> ReadAllTextAsync(string path) => File.ReadAllTextAsync(path);
+        public Task WriteAllTextAsync(string path, string contents) => File.WriteAllTextAsync(path, contents);
+    }
+}
